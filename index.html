@@ -1,1 +1,499 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Special Crime Bureau: Case Files</title>
+  <style>
+    :root {
+      --bg-dark: #121316;
+      --panel-bg: #1c1e24;
+      --panel-border: #2f3440;
+      --accent-red: #c0392b;
+      --accent-gold: #d4ac0d;
+      --accent-cyan: #17a2b8;
+      --accent-green: #27ae60;
+      --text-main: #e0e0e0;
+      --text-muted: #8c93a0;
+      --font-mono: 'Courier New', Courier, monospace;
+      --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top HUD / Status Bar */
+    header {
+      background: #090a0c;
+      border-bottom: 2px solid var(--accent-red);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .hud-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ff4757;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .hud-stats {
+      display: flex;
+      gap: 25px;
+      font-family: var(--font-mono);
+      font-size: 1rem;
+    }
+    .hud-item span {
+      font-weight: bold;
+      color: #fff;
+    }
+    .badge-gold { color: var(--accent-gold); }
+    .badge-cyan { color: var(--accent-cyan); }
+    .badge-red { color: #ff6b6b; }
+    .badge-green { color: var(--accent-green); }
+
+    /* Main Grid Layout */
+    .main-container {
+      display: grid;
+      grid-template-columns: 320px 1fr 340px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left Sidebar: Case Dossier & Objective Checklist */
+    .sidebar-left {
+      background: var(--panel-bg);
+      border-right: 1px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .section-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-gold);
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 5px;
+      margin-bottom: 12px;
+    }
+    .case-select {
+      background: #111;
+      color: #fff;
+      border: 1px solid var(--panel-border);
+      padding: 8px;
+      width: 100%;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-family: var(--font-mono);
+    }
+    .case-briefing {
+      background: #15171c;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      border-left: 3px solid var(--accent-red);
+      margin-bottom: 15px;
+      color: #cbd3e1;
+    }
+    .checklist {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .checklist-item {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      background: #111317;
+      border-radius: 3px;
+      border: 1px dashed var(--panel-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .checklist-item.solved {
+      border-style: solid;
+      border-color: var(--accent-green);
+      color: #2ecc71;
+      background: rgba(39, 174, 96, 0.1);
+    }
+    .checklist-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #555;
+    }
+    .checklist-item.solved .dot {
+      background: var(--accent-green);
+    }
+
+    /* Center Stage: 2D Tactical Crime Map & Interactive Terminal */
+    .center-stage {
+      display: flex;
+      flex-direction: column;
+      background: #0f1012;
+      overflow: hidden;
+      position: relative;
+    }
+    #crimeCanvas {
+      width: 100%;
+      height: 280px;
+      background: #0a0b0d;
+      border-bottom: 2px solid var(--panel-border);
+    }
+    .action-panel {
+      flex: 1;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .tab-btn {
+      background: #252830;
+      color: #bbb;
+      border: 1px solid var(--panel-border);
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--accent-red);
+      color: white;
+      border-color: #ff4757;
+    }
+    .tab-content {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .tab-content.active { display: flex; }
+
+    /* Interactive Grids (Suspects, Labs, Action Logs) */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card h4 { font-size: 0.95rem; color: #fff; }
+    .card p { font-size: 0.8rem; color: var(--text-muted); }
+    .btn {
+      background: #34495e;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #415b76; }
+    .btn-action { background: #27ae60; }
+    .btn-action:hover { background: #2ecc71; }
+    .btn-arrest { background: #c0392b; width: 100%; margin-top: 5px; }
+    .btn-arrest:hover { background: #e74c3c; }
+
+    /* Right Sidebar: Investigation Log / Case Terminal */
+    .sidebar-right {
+      background: var(--panel-bg);
+      border-left: 1px solid var(--panel-border);
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+    .log-terminal {
+      flex: 1;
+      background: #0b0c0e;
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #4af626;
+      overflow-y: auto;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column-reverse;
+    }
+    .log-entry { margin-bottom: 8px; border-bottom: 1px dotted #222; padding-bottom: 4px; }
+    .log-timestamp { color: #888; margin-right: 5px; }
+
+    /* Modal / Alert */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-box {
+      background: #1c1e24;
+      border: 2px solid var(--accent-red);
+      padding: 25px;
+      width: 480px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .modal-box h2 { margin-bottom: 10px; }
+    .modal-box p { font-size: 0.9rem; margin-bottom: 20px; color: #ccc; }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar: Clock, Clue Points, Department Budget -->
+  <header>
+    <div class="hud-title">🔍 Crime Patrol : CID Bureau</div>
+    <div class="hud-stats">
+      <div class="hud-item">TIME REMAINING: <span id="hudTime" class="badge-red">72h 00m</span></div>
+      <div class="hud-item">CLUE POINTS: <span id="hudCP" class="badge-cyan">5</span> / 5</div>
+      <div class="hud-item">BUDGET: <span id="hudMoney" class="badge-gold">₹50,000</span></div>
+      <div class="hud-item">POINTS SOLVED: <span id="hudSolved" class="badge-green">0</span> / 10</div>
+    </div>
+  </header>
+
+  <!-- Game Main View -->
+  <div class="main-container">
+
+    <!-- Left: Case File & Objective Checklist -->
+    <div class="sidebar-left">
+      <div class="section-title">Case File Archive</div>
+      <select id="caseSelector" class="case-select"></select>
+
+      <div class="section-title">FIR & Case Brief</div>
+      <div id="caseBrief" class="case-briefing"></div>
+
+      <div class="section-title">10 Case Solved Points</div>
+      <ul id="checklistUl" class="checklist"></ul>
+    </div>
+
+    <!-- Center: Interactive 2D Map & Department Hub -->
+    <div class="center-stage">
+      <canvas id="crimeCanvas"></canvas>
+      <div class="action-panel">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('locations')">📍 Tactical Locations</button>
+          <button class="tab-btn" onclick="switchTab('suspects')">👥 Suspects & Persons of Interest</button>
+          <button class="tab-btn" onclick="switchTab('forensics')">🔬 Forensic & Surveillance Lab</button>
+        </div>
+
+        <!-- Locations Tab -->
+        <div id="tab-locations" class="tab-content active">
+          <div class="cards-grid" id="locationsGrid"></div>
+        </div>
+
+        <!-- Suspects Tab -->
+        <div id="tab-suspects" class="tab-content">
+          <div class="cards-grid" id="suspectsGrid"></div>
+        </div>
+
+        <!-- Forensics Tab -->
+        <div id="tab-forensics" class="tab-content">
+          <div class="cards-grid" id="forensicsGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Case Dispatch / Terminal Logs -->
+    <div class="sidebar-right">
+      <div class="section-title">Investigation Terminal</div>
+      <div id="logTerminal" class="log-terminal"></div>
+      <button class="btn btn-arrest" onclick="openArrestModal()" style="margin-top: 15px; padding: 12px; font-weight: bold;">
+        🚨 ISSUE COURT ARREST WARRANT
+      </button>
+    </div>
+  </div>
+
+  <!-- End Game Modal -->
+  <div id="gameModal" class="modal-overlay">
+    <div class="modal-box">
+      <h2 id="modalTitle">CASE RESOLVED</h2>
+      <p id="modalDesc"></p>
+      <button class="btn btn-action" onclick="resetGame()">PLAY AGAIN / NEXT CASE</button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       20 CRIME PATROL CASES ARCHIVE
+       Each case contains 10 specific checklist points required for conviction.
+       ========================================================================= */
+    const cases = [
+      {
+        id: 1,
+        title: "Case #101: The Highway Gunny Bag",
+        desc: "A woman's body was discovered stuffed in a jute sack along the bypass. A planted suicide note named 3 local rivals, but forensics suggests cold-blooded strangulation.",
+        killer: "Rakesh Verma",
+        points: [
+          "Post-mortem report confirms strangulation, ruling out suicide.",
+          "Handwriting analysis reveals the victim was forced to write the note.",
+          "Alibi check verifies all 3 individuals in the note are completely uninvolved.",
+          "Victim's Call Detail Records (CDR) expose an unregistered burner number.",
+          "CCTV footage from toll gate spots a grey rental sedan at 02:40 AM.",
+          "Rental car agency records identify Rakesh Verma as the driver.",
+          "Cell-tower triangulation shows Rakesh's mobile at the body disposal site.",
+          "Forensic search of rental car trunk yields matching jute fabric fibers.",
+          "Rakesh's past Tihar Jail prison records reveal an old score to settle with rivals.",
+          "Rakesh breaks down under interrogation and reveals the safehouse murder site."
+        ],
+        locations: [
+          { name: "Highway Culvert (Crime Scene)", costTime: 3, costMoney: 500, pointIndex: 0 },
+          { name: "Old Toll Plaza Checkpoint", costTime: 4, costMoney: 1200, pointIndex: 4 },
+          { name: "Laxmi Car Rentals", costTime: 2, costMoney: 800, pointIndex: 5 }
+        ],
+        suspects: [
+          { name: "Sunil & Gang (Named in Note)", role: "Framed Rivals", pointIndex: 2 },
+          { name: "Rakesh Verma", role: "Victim's Ex-Employer", pointIndex: 9 },
+          { name: "Pooja Sharma", role: "Roommate / Colleague", pointIndex: -1 }
+        ],
+        labTasks: [
+          { name: "Forensic Document & Handwriting Check", costTime: 4, costMoney: 2500, cp: 1, pointIndex: 1 },
+          { name: "CDR Dump & Mobile Tower Mapping", costTime: 5, costMoney: 3000, cp: 1, pointIndex: 3 },
+          { name: "Trunk Vacuum & Micro-Fiber Match", costTime: 6, costMoney: 4000, cp: 1, pointIndex: 7 },
+          { name: "State Prison Record Cross-Reference", costTime: 3, costMoney: 1000, cp: 0, pointIndex: 8 },
+          { name: "Digital Geo-Fencing Analysis", costTime: 4, costMoney: 3500, cp: 1, pointIndex: 6 }
+        ]
+      },
+      {
+        id: 2,
+        title: "Case #102: The Blind Turn Heist",
+        desc: "A cash transport transit van vanished in broad daylight. The driver was found drugged, and ₹2 Crores are missing without signs of forced vehicle entry.",
+        killer: "Inspector Rathore",
+        points: [
+          "Chemical toxicology identifies a fast-acting veterinary sedative in driver's tea.",
+          "Cash-van biometric vault was opened with an authorized admin master-key.",
+          "Tea vendor identifies a man in a police uniform purchasing the beverage.",
+          "GPS tracker on the van was disabled at exact dead-zone mile marker 42.",
+          "CDR dumps reveal insider calls between the security manager and burner phone.",
+          "Highway patrol footage shows official patrol jeep escorting the rogue van.",
+          "Bank branch logs confirm master keys were audited by Inspector Rathore.",
+          "Informant tip uncovers bags hidden in an abandoned brick kiln.",
+          "Fingerprints lifted from vault interior match Rathore's thumbprint.",
+          "Seized currency serial numbers directly match the stolen reserve stash."
+        ],
+        locations: [
+          { name: "Highway Tea Stall", costTime: 2, costMoney: 500, pointIndex: 2 },
+          { name: "Van Recovery Ditch", costTime: 3, costMoney: 1000, pointIndex: 3 },
+          { name: "Abandoned Brick Kiln", costTime: 5, costMoney: 2000, pointIndex: 7 }
+        ],
+        suspects: [
+          { name: "Ramu (Van Driver)", role: "Drugged Driver", pointIndex: 0 },
+          { name: "Inspector Rathore", role: "Duty Escort Officer", pointIndex: 8 },
+          { name: "Kunal Ghosh", role: "Agency Security Head", pointIndex: 4 }
+        ],
+        labTasks: [
+          { name: "Blood Toxicology Screen", costTime: 3, costMoney: 2500, cp: 1, pointIndex: 0 },
+          { name: "Vault Access Log Decryption", costTime: 4, costMoney: 3000, cp: 1, pointIndex: 1 },
+          { name: "Highway Surveillance Enhancement", costTime: 6, costMoney: 4000, cp: 1, pointIndex: 5 },
+          { name: "Police Armory & Asset Dispatch Log", costTime: 2, costMoney: 1200, cp: 0, pointIndex: 6 },
+          { name: "Vault Latent Fingerprint Processing", costTime: 5, costMoney: 3500, cp: 1, pointIndex: 9 }
+        ]
+      },
+      {
+        id: 3,
+        title: "Case #103: The Silent Inheritance",
+        desc: "A wealthy patriarch dies in his penthouse. The death appeared natural at first glance, but his rewritten will leaves entire estates to an unknown youth.",
+        killer: "Advocate Roy",
+        points: [
+          "Autopsy detects lethal potassium overdose masked as sudden cardiac arrest.",
+          "Notary logs show the new will was witnessed by fictitious identities.",
+          "The caretaker reports strange midnight visits by the family legal advisor.",
+          "Bank accounts show ₹15 Lakhs wired to a forged offshore beneficiary.",
+          "CCTV at registry reveals an imposter impersonating the ailing patriarch.",
+          "Sub-registrar acknowledges bribe money offered to skip thumbprint biometric.",
+          "Handwriting forensics confirms patriarch's signatures were forged via carbon tracing.",
+          "Search warrant of Advocate Roy's office recovers original legitimate will.",
+          "Syringe and potassium chloride ampoule discovered in Roy's desk safe.",
+          "Confronted with forensic handwriting and chemical proof, Roy confesses."
+        ],
+        locations: [
+          { name: "Skyline Luxury Penthouse", costTime: 3, costMoney: 600, pointIndex: 2 },
+          { name: "District Registry Office", costTime: 4, costMoney: 1500, pointIndex: 5 },
+          { name: "Roy Legal Chamber", costTime: 3, costMoney: 1000, pointIndex: 7 }
+        ],
+        suspects: [
+          { name: "Arjun Singhania", role: "Estranged Elder Son", pointIndex: -1 },
+          { name: "Advocate Roy", role: "Family Legal Advisor", pointIndex: 9 },
+          { name: "Gopal (Caretaker)", role: "Domestic Help", pointIndex: 2 }
+        ],
+        labTasks: [
+          { name: "Cardiac Tissue Toxicology Panel", costTime: 5, costMoney: 3500, cp: 1, pointIndex: 0 },
+          { name: "Signature Spectroscopic Forensics", costTime: 4, costMoney: 3000, cp: 1, pointIndex: 6 },
+          { name: "Offshore Bank Transaction Trace", costTime: 4, costMoney: 2000, cp: 0, pointIndex: 3 },
+          { name: "Registry Facial Recognition Match", costTime: 3, costMoney: 2500, cp: 1, pointIndex: 4 },
+          { name: "Medical Vial Chemical Trace Analysis", costTime: 4, costMoney: 3000, cp: 1, pointIndex: 8 }
+        ]
+      }
+    ];
+
+    // Generate 17 more realistic procedural cases to complete the 20-case database
+    const extraThemes = [
+      ["Midnight Call Missing", "Call center executive disappears on route home in a cab.", "Cab Driver Santosh"],
+      ["The Lakeview Flat Mystery", "Elderly couple discovered dead in locked flat without ransacking.", "Neighbor Deepak"],
+      ["The Matrimonial Web", "Prospective groom defrauds 4 families and poisons an inquisitive father.", "Ajay alias Vinay"],
+      ["Jewel Merchant Ambush", "Diamond merchant shot near his godown; gold bars swapped with brass.", "Store Assistant Mayank"],
+      ["The Farmhouse Secret", "Weekend party ends in a guest's disappearance in the swimming pool.", "Host Vicky Malhotra"],
+      ["The Coaching Center Tragedy", "Chemistry tutor killed inside lecture hall right before exams.", "Director Sharma"],
+      ["Deadly Matrimony", "Bride collapses at reception; arsenic traces found in cold beverage.", "Cousin Nilesh"],
+      ["The Hospital Shift", "Senior nurse found dead in pharmacy storage room during night duty.", "Dr. Vardhan"],
+      ["The Industrial Plot", "Factory owner falls into blast furnace machinery; safety switch bypassed.", "Partner Singhal"],
+      ["The Fake Lottery Ring", "Retired teacher murdered after receiving fake lottery processing call.", "Scam Leader Bunty"],
+      ["The River Bed Clue", "Decomposed body discovered partially buried along dried river basin.", "Contractor Yadav"],
+      ["The Broken Alibi", "Prominent jeweler murdered during heavy rains; suspect claimed temple visit.", "Brother-in-law Hemant"],
+      ["Vanished in Transit", "College girl board express train from Pune but fails to arrive in Mumbai.", "Ticket Checker Sathe"],
+      ["The Locked Terrace", "Tenant found deceased on locked roof; keys found in landlord's possession.", "Landlord Mishra"],
+      ["The Lab Fire", "Quality control analyst burnt in laboratory fire; sprinklers were sabotaged.", "Plant Manager Kulkarni"],
+      ["Gold Loan Conspiracy", "Branch manager found tied in locker room; ₹90 Lakhs gold replaced with fake.", "Appraiser Manoj"],
+      ["The Midnight SOS", "Doctor receives panic call from patient, but reaches to find patient slain.", "Compounder Saleem"]
+    ];
+
+    extraThemes.forEach((t, i) => {
+      const idx = cases.length + 1;
+      cases.push({
+        id: idx,
+        title: `Case #${100 + idx}: ${t[0]}`,
+        desc: t[1],
+        killer: t[2],
+        points: [
+          `Autopsy confirms unnatural homicide rather than suicide or accident.`,
+          `Physical evidence collected from scene points to calculated premeditation.`,
+          `Witness testimony invalidates initial suspect timeline.`,
+          `Electronic CDR tower analysis reveals cr
