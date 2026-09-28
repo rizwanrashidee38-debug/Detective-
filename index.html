@@ -1,10 +1,9 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Special Crime Bureau: Case Files</title>
   <style>
     :root {
@@ -22,38 +21,44 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
       background-color: var(--bg-dark);
       color: var(--text-main);
       font-family: var(--font-sans);
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     /* Top HUD / Status Bar */
     header {
       background: #090a0c;
       border-bottom: 2px solid var(--accent-red);
-      padding: 10px 20px;
+      padding: 10px 15px;
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
     .hud-title {
-      font-size: 1.2rem;
+      font-size: 1rem;
       font-weight: bold;
       color: #ff4757;
-      letter-spacing: 2px;
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
     .hud-stats {
       display: flex;
-      gap: 25px;
+      flex-wrap: wrap;
+      gap: 12px;
       font-family: var(--font-mono);
-      font-size: 1rem;
+      font-size: 0.85rem;
     }
     .hud-item span {
       font-weight: bold;
@@ -64,31 +69,47 @@
     .badge-red { color: #ff6b6b; }
     .badge-green { color: var(--accent-green); }
 
-    /* Main Grid Layout */
+    /* Responsive Grid Layout */
     .main-container {
       display: grid;
-      grid-template-columns: 320px 1fr 340px;
+      grid-template-columns: 320px 1fr 320px;
       flex: 1;
-      overflow: hidden;
+      min-height: 0;
     }
 
-    /* Left Sidebar: Case Dossier & Objective Checklist */
+    @media (max-width: 950px) {
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+    }
+
+    /* Left Sidebar: Case Dossier & Checklist */
     .sidebar-left {
       background: var(--panel-bg);
       border-right: 1px solid var(--panel-border);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 15px;
       display: flex;
       flex-direction: column;
-      padding: 15px;
+      gap: 10px;
+      max-height: 500px;
       overflow-y: auto;
     }
+    @media (min-width: 951px) {
+      .sidebar-left { max-height: none; }
+    }
+
     .section-title {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       color: var(--accent-gold);
       border-bottom: 1px solid var(--panel-border);
-      padding-bottom: 5px;
-      margin-bottom: 12px;
+      padding-bottom: 4px;
+      margin-top: 5px;
+      font-weight: bold;
     }
     .case-select {
       background: #111;
@@ -97,28 +118,28 @@
       padding: 8px;
       width: 100%;
       border-radius: 4px;
-      margin-bottom: 15px;
       font-family: var(--font-mono);
+      font-size: 0.85rem;
     }
     .case-briefing {
       background: #15171c;
-      padding: 12px;
+      padding: 10px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       line-height: 1.4;
       border-left: 3px solid var(--accent-red);
-      margin-bottom: 15px;
       color: #cbd3e1;
+      min-height: 48px;
     }
     .checklist {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
     .checklist-item {
-      font-size: 0.8rem;
-      padding: 6px 10px;
+      font-size: 0.78rem;
+      padding: 6px 8px;
       background: #111317;
       border-radius: 3px;
       border: 1px dashed var(--panel-border);
@@ -130,11 +151,12 @@
       border-style: solid;
       border-color: var(--accent-green);
       color: #2ecc71;
-      background: rgba(39, 174, 96, 0.1);
+      background: rgba(39, 174, 96, 0.12);
     }
     .checklist-item .dot {
       width: 8px;
       height: 8px;
+      min-width: 8px;
       border-radius: 50%;
       background: #555;
     }
@@ -142,116 +164,119 @@
       background: var(--accent-green);
     }
 
-    /* Center Stage: 2D Tactical Crime Map & Interactive Terminal */
+    /* Center Stage: Tactical Map & Actions */
     .center-stage {
       display: flex;
       flex-direction: column;
       background: #0f1012;
-      overflow: hidden;
-      position: relative;
+      min-height: 450px;
     }
     #crimeCanvas {
       width: 100%;
-      height: 280px;
+      height: 220px;
       background: #0a0b0d;
       border-bottom: 2px solid var(--panel-border);
+      display: block;
     }
     .action-panel {
-      flex: 1;
-      padding: 15px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      gap: 10px;
     }
     .tabs {
       display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
     }
     .tab-btn {
       background: #252830;
       color: #bbb;
       border: 1px solid var(--panel-border);
-      padding: 8px 16px;
+      padding: 7px 12px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       border-radius: 4px;
-      transition: all 0.2s;
+      white-space: nowrap;
     }
     .tab-btn.active {
       background: var(--accent-red);
       color: white;
       border-color: #ff4757;
+      font-weight: bold;
     }
     .tab-content {
-      flex: 1;
       display: none;
       flex-direction: column;
       gap: 10px;
-      overflow-y: auto;
     }
     .tab-content.active { display: flex; }
 
-    /* Interactive Grids (Suspects, Labs, Action Logs) */
+    /* Interactive Grids */
     .cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
     }
     .card {
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
       border-radius: 4px;
-      padding: 12px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
     }
-    .card h4 { font-size: 0.95rem; color: #fff; }
-    .card p { font-size: 0.8rem; color: var(--text-muted); }
+    .card h4 { font-size: 0.88rem; color: #fff; }
+    .card p { font-size: 0.78rem; color: var(--text-muted); }
     .btn {
       background: #34495e;
       color: #fff;
       border: none;
-      padding: 6px 12px;
+      padding: 8px 12px;
       border-radius: 3px;
       cursor: pointer;
       font-size: 0.8rem;
-      transition: background 0.2s;
+      font-weight: bold;
     }
-    .btn:hover { background: #415b76; }
+    .btn:active { transform: scale(0.98); }
     .btn-action { background: #27ae60; }
-    .btn-action:hover { background: #2ecc71; }
-    .btn-arrest { background: #c0392b; width: 100%; margin-top: 5px; }
-    .btn-arrest:hover { background: #e74c3c; }
+    .btn-arrest { background: #c0392b; width: 100%; }
 
-    /* Right Sidebar: Investigation Log / Case Terminal */
+    /* Right Sidebar: Terminal Logs */
     .sidebar-right {
       background: var(--panel-bg);
       border-left: 1px solid var(--panel-border);
+      border-top: 1px solid var(--panel-border);
       padding: 15px;
       display: flex;
       flex-direction: column;
+      gap: 10px;
+      min-height: 250px;
     }
     .log-terminal {
-      flex: 1;
+      height: 200px;
       background: #0b0c0e;
       border: 1px solid var(--panel-border);
       border-radius: 4px;
-      padding: 10px;
+      padding: 8px;
       font-family: var(--font-mono);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: #4af626;
       overflow-y: auto;
       line-height: 1.4;
       display: flex;
       flex-direction: column-reverse;
     }
-    .log-entry { margin-bottom: 8px; border-bottom: 1px dotted #222; padding-bottom: 4px; }
-    .log-timestamp { color: #888; margin-right: 5px; }
+    @media (min-width: 951px) {
+      .log-terminal { height: auto; flex: 1; }
+    }
+    .log-entry { margin-bottom: 5px; border-bottom: 1px dotted #222; padding-bottom: 2px; }
+    .log-timestamp { color: #888; margin-right: 4px; }
 
-    /* Modal / Alert */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -260,46 +285,44 @@
       justify-content: center;
       align-items: center;
       z-index: 100;
+      padding: 15px;
     }
     .modal-box {
       background: #1c1e24;
       border: 2px solid var(--accent-red);
-      padding: 25px;
-      width: 480px;
+      padding: 20px;
+      width: 100%;
+      max-width: 440px;
       border-radius: 6px;
       text-align: center;
     }
-    .modal-box h2 { margin-bottom: 10px; }
-    .modal-box p { font-size: 0.9rem; margin-bottom: 20px; color: #ccc; }
-
-    /* Scrollbars */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .modal-box h2 { font-size: 1.1rem; margin-bottom: 8px; }
+    .modal-box p { font-size: 0.85rem; margin-bottom: 15px; color: #ccc; }
   </style>
 </head>
 <body>
 
-  <!-- Top Bar: Clock, Clue Points, Department Budget -->
+  <!-- Top Bar -->
   <header>
     <div class="hud-title">🔍 Crime Patrol : CID Bureau</div>
     <div class="hud-stats">
-      <div class="hud-item">TIME REMAINING: <span id="hudTime" class="badge-red">72h 00m</span></div>
-      <div class="hud-item">CLUE POINTS: <span id="hudCP" class="badge-cyan">5</span> / 5</div>
+      <div class="hud-item">TIME: <span id="hudTime" class="badge-red">72h 00m</span></div>
+      <div class="hud-item">CP: <span id="hudCP" class="badge-cyan">5</span> / 5</div>
       <div class="hud-item">BUDGET: <span id="hudMoney" class="badge-gold">₹50,000</span></div>
-      <div class="hud-item">POINTS SOLVED: <span id="hudSolved" class="badge-green">0</span> / 10</div>
+      <div class="hud-item">SOLVED: <span id="hudSolved" class="badge-green">0</span> / 10</div>
     </div>
   </header>
 
-  <!-- Game Main View -->
+  <!-- Main View -->
   <div class="main-container">
 
-    <!-- Left: Case File & Objective Checklist -->
+    <!-- Left: Case File & Checklist -->
     <div class="sidebar-left">
       <div class="section-title">Case File Archive</div>
       <select id="caseSelector" class="case-select"></select>
 
       <div class="section-title">FIR & Case Brief</div>
-      <div id="caseBrief" class="case-briefing"></div>
+      <div id="caseBrief" class="case-briefing">Loading case details...</div>
 
       <div class="section-title">10 Case Solved Points</div>
       <ul id="checklistUl" class="checklist"></ul>
@@ -310,9 +333,9 @@
       <canvas id="crimeCanvas"></canvas>
       <div class="action-panel">
         <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('locations')">📍 Tactical Locations</button>
-          <button class="tab-btn" onclick="switchTab('suspects')">👥 Suspects & Persons of Interest</button>
-          <button class="tab-btn" onclick="switchTab('forensics')">🔬 Forensic & Surveillance Lab</button>
+          <button class="tab-btn active" id="tabBtn-locations" onclick="switchTab('locations', this)">📍 Locations</button>
+          <button class="tab-btn" id="tabBtn-suspects" onclick="switchTab('suspects', this)">👥 Suspects</button>
+          <button class="tab-btn" id="tabBtn-forensics" onclick="switchTab('forensics', this)">🔬 Forensic Lab</button>
         </div>
 
         <!-- Locations Tab -->
@@ -332,11 +355,11 @@
       </div>
     </div>
 
-    <!-- Right: Case Dispatch / Terminal Logs -->
+    <!-- Right: Terminal Logs -->
     <div class="sidebar-right">
       <div class="section-title">Investigation Terminal</div>
       <div id="logTerminal" class="log-terminal"></div>
-      <button class="btn btn-arrest" onclick="openArrestModal()" style="margin-top: 15px; padding: 12px; font-weight: bold;">
+      <button class="btn btn-arrest" onclick="openArrestModal()">
         🚨 ISSUE COURT ARREST WARRANT
       </button>
     </div>
@@ -347,15 +370,11 @@
     <div class="modal-box">
       <h2 id="modalTitle">CASE RESOLVED</h2>
       <p id="modalDesc"></p>
-      <button class="btn btn-action" onclick="resetGame()">PLAY AGAIN / NEXT CASE</button>
+      <button class="btn btn-action" onclick="resetGame()">PROCEED TO NEXT CASE</button>
     </div>
   </div>
 
   <script>
-    /* =========================================================================
-       20 CRIME PATROL CASES ARCHIVE
-       Each case contains 10 specific checklist points required for conviction.
-       ========================================================================= */
     const cases = [
       {
         id: 1,
@@ -464,7 +483,6 @@
       }
     ];
 
-    // Generate 17 more realistic procedural cases to complete the 20-case database
     const extraThemes = [
       ["Midnight Call Missing", "Call center executive disappears on route home in a cab.", "Cab Driver Santosh"],
       ["The Lakeview Flat Mystery", "Elderly couple discovered dead in locked flat without ransacking.", "Neighbor Deepak"],
@@ -478,7 +496,7 @@
       ["The Fake Lottery Ring", "Retired teacher murdered after receiving fake lottery processing call.", "Scam Leader Bunty"],
       ["The River Bed Clue", "Decomposed body discovered partially buried along dried river basin.", "Contractor Yadav"],
       ["The Broken Alibi", "Prominent jeweler murdered during heavy rains; suspect claimed temple visit.", "Brother-in-law Hemant"],
-      ["Vanished in Transit", "College girl board express train from Pune but fails to arrive in Mumbai.", "Ticket Checker Sathe"],
+      ["Vanished in Transit", "College girl boards express train from Pune but fails to arrive in Mumbai.", "Ticket Checker Sathe"],
       ["The Locked Terrace", "Tenant found deceased on locked roof; keys found in landlord's possession.", "Landlord Mishra"],
       ["The Lab Fire", "Quality control analyst burnt in laboratory fire; sprinklers were sabotaged.", "Plant Manager Kulkarni"],
       ["Gold Loan Conspiracy", "Branch manager found tied in locker room; ₹90 Lakhs gold replaced with fake.", "Appraiser Manoj"],
@@ -494,6 +512,341 @@
         killer: t[2],
         points: [
           `Autopsy confirms unnatural homicide rather than suicide or accident.`,
-          `Physical evidence collected from scene points to calculated premeditation.`,
+          `Physical evidence collected from scene points to premeditation.`,
           `Witness testimony invalidates initial suspect timeline.`,
-          `Electronic CDR tower analysis reveals cr
+          `Electronic CDR tower analysis reveals critical location contradictions.`,
+          `CCTV enhancement pins suspect vehicle moving away from the perimeter.`,
+          `Banking audit reveals uncharacteristic large cash withdrawals/deposits.`,
+          `Forensic team lifts bloodstains matching victim from suspect clothing.`,
+          `Hidden murder weapon or instrument discovered based on confidential informant.`,
+          `Confidential alibi witness recants statement after formal police scrutiny.`,
+          `Accused ${t[2]} crumbles under physical evidence interrogation and confesses.`
+        ],
+        locations: [
+          { name: "Primary Crime Site", costTime: 3, costMoney: 500, pointIndex: 1 },
+          { name: "Surveillance Junction", costTime: 4, costMoney: 1200, pointIndex: 4 },
+          { name: "Recovery Yard", costTime: 4, costMoney: 1800, pointIndex: 7 }
+        ],
+        suspects: [
+          { name: t[2], role: "Prime Person of Interest", pointIndex: 9 },
+          { name: "Vikas Patil", role: "Local Witness", pointIndex: 2 },
+          { name: "Anand Shinde", role: "Associate / Acquaintance", pointIndex: 8 }
+        ],
+        labTasks: [
+          { name: "Forensic Post-Mortem Report", costTime: 4, costMoney: 2000, cp: 1, pointIndex: 0 },
+          { name: "CDR & IMEI Geo-Mapping", costTime: 4, costMoney: 3000, cp: 1, pointIndex: 3 },
+          { name: "Financial Audit & Bank Tracing", costTime: 3, costMoney: 1500, cp: 0, pointIndex: 5 },
+          { name: "Luminol Blood & Serology Screening", costTime: 5, costMoney: 4000, cp: 1, pointIndex: 6 }
+        ]
+      });
+    });
+
+    let currentCase = cases[0];
+    let timeRemaining = 72;
+    let cluePoints = 5;
+    let budget = 50000;
+    let solvedPoints = new Set();
+
+    const hudTime = document.getElementById("hudTime");
+    const hudCP = document.getElementById("hudCP");
+    const hudMoney = document.getElementById("hudMoney");
+    const hudSolved = document.getElementById("hudSolved");
+    const caseSelector = document.getElementById("caseSelector");
+    const caseBrief = document.getElementById("caseBrief");
+    const checklistUl = document.getElementById("checklistUl");
+    const logTerminal = document.getElementById("logTerminal");
+    const locationsGrid = document.getElementById("locationsGrid");
+    const suspectsGrid = document.getElementById("suspectsGrid");
+    const forensicsGrid = document.getElementById("forensicsGrid");
+
+    function log(msg) {
+      const d = new Date();
+      const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+      const div = document.createElement("div");
+      div.className = "log-entry";
+      div.innerHTML = `<span class="log-timestamp">[${timeStr}]</span> ${msg}`;
+      logTerminal.prepend(div);
+    }
+
+    function updateHUD() {
+      hudTime.innerText = `${timeRemaining}h 00m`;
+      hudCP.innerText = cluePoints;
+      hudMoney.innerText = `₹${budget.toLocaleString('en-IN')}`;
+      hudSolved.innerText = solvedPoints.size;
+    }
+
+    function renderChecklist() {
+      checklistUl.innerHTML = "";
+      currentCase.points.forEach((pt, idx) => {
+        const li = document.createElement("li");
+        const isDone = solvedPoints.has(idx);
+        li.className = `checklist-item ${isDone ? "solved" : ""}`;
+        li.innerHTML = `<div class="dot"></div><span>${isDone ? pt : `Point #${idx + 1}: [PENDING CLUE/ACTION]`}</span>`;
+        checklistUl.appendChild(li);
+      });
+    }
+
+    function renderPanels() {
+      // Locations
+      locationsGrid.innerHTML = "";
+      currentCase.locations.forEach(loc => {
+        const c = document.createElement("div");
+        c.className = "card";
+        c.innerHTML = `
+          <h4>${loc.name}</h4>
+          <p>Search area and conduct on-ground field sweep.</p>
+          <p><b>Cost:</b> ${loc.costTime}h | ₹${loc.costMoney}</p>
+          <button class="btn btn-action" onclick="visitLocation('${loc.name}', ${loc.costTime}, ${loc.costMoney}, ${loc.pointIndex})">Investigate Site</button>
+        `;
+        locationsGrid.appendChild(c);
+      });
+
+      // Suspects
+      suspectsGrid.innerHTML = "";
+      currentCase.suspects.forEach(s => {
+        const c = document.createElement("div");
+        c.className = "card";
+        c.innerHTML = `
+          <h4>${s.name}</h4>
+          <p><b>Role:</b> ${s.role}</p>
+          <p>Custodial verification & timeline interrogation.</p>
+          <p><b>Cost:</b> 3h | 1 CP</p>
+          <button class="btn" onclick="interrogateSuspect('${s.name}', ${s.pointIndex})">Interrogate</button>
+        `;
+        suspectsGrid.appendChild(c);
+      });
+
+      // Forensics
+      forensicsGrid.innerHTML = "";
+      currentCase.labTasks.forEach(lab => {
+        const c = document.createElement("div");
+        c.className = "card";
+        c.innerHTML = `
+          <h4>${lab.name}</h4>
+          <p>Scientific laboratory and forensic phone recovery.</p>
+          <p><b>Cost:</b> ${lab.costTime}h | ₹${lab.costMoney} ${lab.cp ? `| ${lab.cp} CP` : ""}</p>
+          <button class="btn btn-action" onclick="runLab('${lab.name}', ${lab.costTime}, ${lab.costMoney}, ${lab.cp}, ${lab.pointIndex})">Request Test</button>
+        `;
+        forensicsGrid.appendChild(c);
+      });
+    }
+
+    function loadCase(id) {
+      currentCase = cases.find(c => c.id === id) || cases[0];
+      timeRemaining = 72;
+      cluePoints = 5;
+      budget = 50000;
+      solvedPoints.clear();
+
+      caseBrief.innerText = currentCase.desc;
+      logTerminal.innerHTML = "";
+      log(`CASE FILE LOADED: ${currentCase.title}`);
+      log(`72 Hours allocated. Gather evidence and verify all 10 points.`);
+
+      renderChecklist();
+      renderPanels();
+      updateHUD();
+      drawTacticalCanvas();
+    }
+
+    function spendResources(hours, cost, cp = 0) {
+      if (timeRemaining < hours) {
+        log(`❌ INSUFFICIENT TIME! Action takes ${hours}h, but only ${timeRemaining}h left.`);
+        checkGameOver();
+        return false;
+      }
+      if (budget < cost) {
+        log(`❌ INSUFFICIENT BUDGET! Costs ₹${cost}, but you have ₹${budget}.`);
+        return false;
+      }
+      if (cluePoints < cp) {
+        log(`❌ INSUFFICIENT CLUE POINTS! Requires ${cp} CP.`);
+        return false;
+      }
+
+      timeRemaining -= hours;
+      budget -= cost;
+      cluePoints -= cp;
+      updateHUD();
+      checkGameOver();
+      return true;
+    }
+
+    function solvePoint(index) {
+      if (index >= 0 && !solvedPoints.has(index)) {
+        solvedPoints.add(index);
+        log(`🎯 POINT #${index + 1} SOLVED: ${currentCase.points[index]}`);
+        renderChecklist();
+        updateHUD();
+      }
+    }
+
+    function checkGameOver() {
+      if (timeRemaining <= 0 && solvedPoints.size < 10) {
+        showModal("CASE GONE COLD", "72 Hours expired. Without conclusive evidence, suspects were released on bail.");
+      }
+    }
+
+    function visitLocation(name, time, cost, pointIdx) {
+      if (!spendResources(time, cost, 0)) return;
+      log(`Inspected location: ${name}.`);
+      if (pointIdx !== -1) solvePoint(pointIdx);
+      drawTacticalCanvas(name);
+    }
+
+    function interrogateSuspect(name, pointIdx) {
+      if (!spendResources(3, 0, 1)) return;
+      log(`Interrogating: ${name}. Detailed alibi questioned.`);
+      if (pointIdx !== -1) {
+        solvePoint(pointIdx);
+      } else {
+        log(`ℹ️ ${name}'s alibi holds up firmly under verification.`);
+      }
+    }
+
+    function runLab(name, time, cost, cp, pointIdx) {
+      if (!spendResources(time, cost, cp)) return;
+      log(`Forensic test completed: ${name}.`);
+      if (pointIdx !== -1) solvePoint(pointIdx);
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      el.classList.add("active");
+      document.getElementById(`tab-${tabId}`).classList.add("active");
+    }
+
+    /* 2D Canvas Map */
+    const canvas = document.getElementById("crimeCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resizeCanvas() {
+      if (!canvas || !canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth || 360;
+      canvas.height = 220;
+      drawTacticalCanvas();
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    function drawTacticalCanvas(activeSpot = null) {
+      if (!ctx) return;
+      ctx.fillStyle = "#0c0d11";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "#1b1e26";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 35) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 35) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      const centerX = canvas.width / 2;
+      const centerY = 110;
+
+      ctx.strokeStyle = "rgba(192, 57, 43, 0.4)";
+      ctx.setLineDash([4, 4]);
+
+      currentCase.locations.forEach((loc, i) => {
+        const lx = 50 + i * ((canvas.width - 100) / Math.max(1, currentCase.locations.length - 1));
+        const ly = 55 + (i % 2) * 90;
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(lx, ly);
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        ctx.fillStyle = (activeSpot === loc.name) ? "#2ecc71" : "#c0392b";
+        ctx.beginPath();
+        ctx.arc(lx, ly, 9, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#fff";
+        ctx.font = "10px monospace";
+        ctx.fillText(loc.name.substring(0, 14), Math.max(5, lx - 30), ly + 20);
+      });
+
+      // Bureau HQ
+      ctx.fillStyle = "#3498db";
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 9px sans-serif";
+      ctx.fillText("HQ", centerX - 6, centerY + 3);
+    }
+
+    function openArrestModal() {
+      let suspectOptions = currentCase.suspects.map(s => `<option value="${s.name}">${s.name}</option>`).join("");
+      const modal = document.getElementById("gameModal");
+      const title = document.getElementById("modalTitle");
+      const desc = document.getElementById("modalDesc");
+
+      title.innerText = "COURT ARREST WARRANT";
+      desc.innerHTML = `
+        <p>Select Primary Accused to Charge-sheet:</p>
+        <select id="accusedSelect" style="padding: 8px; width: 90%; background:#111; color:#fff; border:1px solid #444; margin-bottom:15px; border-radius:4px;">
+          ${suspectOptions}
+        </select>
+        <p>Evidence Points Solved: <b>${solvedPoints.size} / 10</b></p>
+        <button class="btn btn-arrest" onclick="submitArrest()">Execute Warrant</button>
+      `;
+      modal.style.display = "flex";
+    }
+
+    function submitArrest() {
+      const chosen = document.getElementById("accusedSelect").value;
+      const isCorrect = (chosen === currentCase.killer);
+
+      if (isCorrect && solvedPoints.size === 10) {
+        showModal("🏆 CASE SOLVED - GUILTY CONVICTION!", 
+          `Accused ${chosen} was convicted with undeniable forensic and material evidence on all 10 points. Justice served!`
+        );
+      } else if (isCorrect && solvedPoints.size < 10) {
+        showModal("⚠️ CASE WEAK - SUSPECT BAILED!", 
+          `You caught the right person (${chosen}), but you only established ${solvedPoints.size}/10 points. Case dismissed for lack of corroborating evidence!`
+        );
+      } else {
+        showModal("❌ BOTCHED CASE - FALSE ARREST!", 
+          `You arrested ${chosen}, who is innocent! The real culprit escaped, and the CID bureau faced intense reprimand.`
+        );
+      }
+    }
+
+    function showModal(title, msg) {
+      document.getElementById("modalTitle").innerText = title;
+      document.getElementById("modalDesc").innerText = msg;
+      document.getElementById("gameModal").style.display = "flex";
+    }
+
+    function resetGame() {
+      document.getElementById("gameModal").style.display = "none";
+      let nextId = (currentCase.id % cases.length) + 1;
+      caseSelector.value = nextId;
+      loadCase(nextId);
+    }
+
+    // Initialize Case Selector and Launch
+    window.addEventListener("DOMContentLoaded", () => {
+      cases.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.innerText = c.title;
+        caseSelector.appendChild(opt);
+      });
+
+      caseSelector.addEventListener("change", (e) => {
+        loadCase(parseInt(e.target.value));
+      });
+
+      resizeCanvas();
+      loadCase(1);
+    });
+  </script>
+</body>
+</html>
+
+                          
